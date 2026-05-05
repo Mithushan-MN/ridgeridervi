@@ -9,7 +9,7 @@ const isLocalhost = Boolean(
 const config = {
   API_URL: isLocalhost 
     ? 'http://localhost:5000/api' 
-    : 'https://videostorage-98fm.vercel.app/api',
+    : 'https://ridgeridervi-lwxo.vercel.app/api',
 };
 
 export default config;

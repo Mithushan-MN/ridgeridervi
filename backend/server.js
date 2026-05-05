@@ -33,7 +33,7 @@ const app = express();
 
 // ====================== CORS (Best Version) ======================
 const allowedOrigins = [
-  "https://videostorage-gamma.vercel.app",     // Your frontend
+  "https://ridgeridervi.vercel.app",     // Your frontend
   "http://localhost:5173",
   "http://localhost:3000"
 ];

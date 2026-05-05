@@ -37,7 +37,7 @@ router.post("/upload", upload.single("video"), async (req, res) => {
   console.log("Upload request received!");
   
   try {
-    const { userName, videoUrl, publicId, folder } = req.body;
+    const { userName, videoUrl, publicId, folder,uploadDate } = req.body;
     
     // Case 1: File is already uploaded to Cloudinary by frontend
     if (videoUrl && publicId) {
@@ -46,6 +46,7 @@ router.post("/upload", upload.single("video"), async (req, res) => {
         videoUrl,
         publicId,
         folder,
+        uploadDate: uploadDate ? new Date(uploadDate) : undefined,
       });
       await video.save();
       return res.json(video);
@@ -94,16 +95,39 @@ router.post("/upload", upload.single("video"), async (req, res) => {
 /* =========================
    📊 GET VIDEOS (ADD HERE 👇)
 ========================= */
+// router.get("/videos", async (req, res) => {
+//   try {
+//     const videos = await Video.find();
+
+//     console.log("VIDEOS FROM DB:", videos); // 👈 DEBUG LINE
+
+//     const grouped = {};
+//     videos.forEach((v) => {
+//       if (!grouped[v.userName]) grouped[v.userName] = [];
+//       grouped[v.userName].push(v);
+//     });
+
+//     res.json(grouped);
+
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
 router.get("/videos", async (req, res) => {
   try {
     const videos = await Video.find();
 
-    console.log("VIDEOS FROM DB:", videos); // 👈 DEBUG LINE
-
     const grouped = {};
+
     videos.forEach((v) => {
-      if (!grouped[v.userName]) grouped[v.userName] = [];
-      grouped[v.userName].push(v);
+      const user = v.userName;
+      const date = new Date(v.uploadDate).toISOString().split("T")[0]; // YYYY-MM-DD
+
+      if (!grouped[user]) grouped[user] = {};
+      if (!grouped[user][date]) grouped[user][date] = [];
+
+      grouped[user][date].push(v);
     });
 
     res.json(grouped);

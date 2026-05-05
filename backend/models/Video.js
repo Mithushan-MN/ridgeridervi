@@ -1,15 +1,21 @@
-// models/Video.js
-const mongoose = require("mongoose");
+  // models/Video.js
+  const mongoose = require("mongoose");
 
-const videoSchema = new mongoose.Schema({
-  userName: String,
-  videoUrl: String,
-  publicId: String,
-  folder: String,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  const videoSchema = new mongoose.Schema({
+    userName: String,
+    videoUrl: String,
+    publicId: String,
+    folder: String,
 
-module.exports = mongoose.model("Video", videoSchema);
+    uploadDate: {
+      type: Date,
+      default: Date.now, // fallback if frontend doesn't send
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  });
+
+  module.exports = mongoose.model("Video", videoSchema);

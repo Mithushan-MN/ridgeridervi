@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import { Upload, User, Video, ArrowRight, CheckCircle } from "lucide-react";
+import rrvi from '../assets/rrvi.png'
 
 export default function UploadPage() {
   const [name, setName] = useState("");
@@ -8,6 +9,11 @@ export default function UploadPage() {
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // ✅ NEW: date state (default today)
+  const [uploadDate, setUploadDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -18,8 +24,9 @@ export default function UploadPage() {
   };
 
   const handleUpload = async () => {
-    if (!name || !video) {
-      alert("Please enter your name and select a video");
+    // ✅ UPDATED validation
+    if (!name || !video || !uploadDate) {
+      alert("Please enter your name, select date and video");
       return;
     }
 
@@ -58,6 +65,7 @@ export default function UploadPage() {
         videoUrl: uploadResult.secure_url,
         publicId: uploadResult.public_id,
         folder: uploadResult.folder,
+        uploadDate: new Date(uploadDate), // ✅ send selected date
       });
 
       setSuccess(true);
@@ -69,15 +77,15 @@ export default function UploadPage() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950 text-white flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center">
+            <div className="w-40 h-40 rounded-2xl flex items-center justify-center">
               <Video className="w-10 h-10 text-white" />
+              <img src={rrvi} alt="" />
             </div>
           </div>
           <h1 className="text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent">
@@ -102,6 +110,19 @@ export default function UploadPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 focus:border-violet-500 rounded-2xl px-6 py-4 text-lg outline-none transition-all placeholder:text-zinc-500"
+                />
+              </div>
+
+              {/* ✅ NEW: Date Input */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-zinc-400 mb-2">
+                  📅 DATE
+                </label>
+                <input
+                  type="date"
+                  value={uploadDate}
+                  onChange={(e) => setUploadDate(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 focus:border-violet-500 rounded-2xl px-6 py-4 text-lg outline-none transition-all text-zinc-300"
                 />
               </div>
 
@@ -173,6 +194,7 @@ export default function UploadPage() {
                   setName("");
                   setVideo(null);
                   setPreview(null);
+                  setUploadDate(new Date().toISOString().split("T")[0]); // reset date
                 }}
                 className="px-8 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium transition"
               >

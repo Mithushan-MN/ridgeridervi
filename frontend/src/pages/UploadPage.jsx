@@ -5,7 +5,7 @@ import rrvi from "../assets/rrvi.png";
 
 export default function UploadPage() {
   const [name, setName] = useState("");
-  const [videos, setVideos] = useState([]); // ✅ multiple videos
+  const [files, setFiles] = useState([]); // ✅ mixed files
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -17,17 +17,17 @@ export default function UploadPage() {
   const [progress, setProgress] = useState(0);
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const selected = Array.from(e.target.files);
 
-    if (files.length > 0) {
-      setVideos(files);
-      setPreview(URL.createObjectURL(files[0])); // keep UI same
+    if (selected.length > 0) {
+      setFiles(selected);
+      setPreview(URL.createObjectURL(selected[0])); // keep UI same
     }
   };
 
   const handleUpload = async () => {
-    if (!name || videos.length === 0 || !uploadDate) {
-      alert("Please enter your name, select date and videos");
+    if (!name || files.length === 0 || !uploadDate) {
+      alert("Please fill all fields");
       return;
     }
 
@@ -37,9 +37,11 @@ export default function UploadPage() {
       const { data: signData } = await api.get("/sign-upload");
       const { signature, timestamp, apiKey, cloudName } = signData;
 
-      // 🔥 LOOP THROUGH ALL VIDEOS
-      for (let i = 0; i < videos.length; i++) {
-        const videoFile = videos[i];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        const isVideo = file.type.startsWith("video");
+        const resourceType = isVideo ? "video" : "image";
 
         const uploadToCloudinary = () => {
           return new Promise((resolve, reject) => {
@@ -47,16 +49,15 @@ export default function UploadPage() {
 
             xhr.open(
               "POST",
-              `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`
+              `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`
             );
 
             xhr.upload.onprogress = (event) => {
               if (event.lengthComputable) {
                 const percent = Math.round((event.loaded / event.total) * 100);
 
-                // 🔥 overall progress across all files
                 const totalProgress = Math.round(
-                  ((i + percent / 100) / videos.length) * 100
+                  ((i + percent / 100) / files.length) * 100
                 );
 
                 setProgress(totalProgress);
@@ -64,16 +65,15 @@ export default function UploadPage() {
             };
 
             xhr.onload = () => {
-              const response = JSON.parse(xhr.response);
-
-              if (xhr.status === 200) resolve(response);
-              else reject(response);
+              const res = JSON.parse(xhr.response);
+              if (xhr.status === 200) resolve(res);
+              else reject(res);
             };
 
             xhr.onerror = () => reject("Upload failed");
 
             const formData = new FormData();
-            formData.append("file", videoFile);
+            formData.append("file", file);
             formData.append("api_key", apiKey);
             formData.append("timestamp", timestamp);
             formData.append("signature", signature);
@@ -83,22 +83,22 @@ export default function UploadPage() {
           });
         };
 
-        const uploadResult = await uploadToCloudinary();
+        const result = await uploadToCloudinary();
 
-        // save each video
         await api.post("/upload", {
           userName: name,
-          videoUrl: uploadResult.secure_url,
-          publicId: uploadResult.public_id,
-          folder: uploadResult.folder,
+          videoUrl: result.secure_url,
+          publicId: result.public_id,
+          folder: result.folder,
           uploadDate: new Date(uploadDate),
+          type: resourceType, // ✅ IMPORTANT
         });
       }
 
       setSuccess(true);
-    } catch (error) {
-      console.error("Upload Error:", error);
-      alert(error.message || "Upload failed. Please try again.");
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
     } finally {
       setUploading(false);
       setProgress(0);
@@ -108,94 +108,75 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950 text-white flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
-        {/* Header */}
+
+        {/* HEADER */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-4">
-            <div className="w-40 h-40 rounded-2xl flex items-center justify-center">
-              <Video className="w-10 h-10 text-white" />
+            <div className="w-40 h-40 flex items-center justify-center">
+              <Video className="w-10 h-10" />
               <img src={rrvi} alt="" />
             </div>
           </div>
-          <h1 className="text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-white via-zinc-300 to-zinc-400 bg-clip-text text-transparent">
-            Share Your Moment
-          </h1>
-          <p className="text-zinc-400 text-lg">Upload videos effortlessly</p>
+          <h1 className="text-5xl font-bold">Share Your Moment</h1>
+          <p className="text-zinc-400">Upload videos & images</p>
         </div>
 
-        <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl p-10">
+        <div className="bg-zinc-900 p-10 rounded-3xl">
+
           {!success ? (
             <div className="space-y-8">
 
               {/* NAME */}
-              <div>
-                <label className="flex items-center gap-2 text-sm text-zinc-400 mb-2">
-                  <User className="w-4 h-4" />
-                  YOUR NAME
-                </label>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-4 text-lg"
-                />
-              </div>
+              <input
+                placeholder="Your Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full p-4 bg-zinc-800 rounded-xl"
+              />
 
               {/* DATE */}
-              <div>
-                <label className="text-sm text-zinc-400 mb-2 block">
-                  📅 DATE
-                </label>
+              <input
+                type="date"
+                value={uploadDate}
+                onChange={(e) => setUploadDate(e.target.value)}
+                className="w-full p-4 bg-zinc-800 rounded-xl"
+              />
+
+              {/* FILE INPUT */}
+              <label className="border-2 border-dashed p-10 block text-center cursor-pointer rounded-xl">
                 <input
-                  type="date"
-                  value={uploadDate}
-                  onChange={(e) => setUploadDate(e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-4"
+                  type="file"
+                  accept="video/*,image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
-              </div>
 
-              {/* VIDEO */}
-              <div>
-                <label className="text-sm text-zinc-400 mb-2 flex gap-2">
-                  <Upload className="w-4 h-4" />
-                  SELECT VIDEOS
-                </label>
-
-                <label className="border-2 border-dashed border-zinc-700 rounded-3xl p-10 flex justify-center cursor-pointer">
-                  <input
-                    type="file"
-                    accept="video/*"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-
-                  {preview ? (
-                    <video src={preview} controls className="w-full rounded-2xl" />
+                {preview ? (
+                  files[0]?.type.startsWith("video") ? (
+                    <video src={preview} controls />
                   ) : (
-                    <p className="text-zinc-400">Click to upload videos</p>
-                  )}
-                </label>
-
-                {videos.length > 1 && (
-                  <p className="text-sm text-zinc-500 mt-2">
-                    {videos.length} videos selected
-                  </p>
+                    <img src={preview} alt="" className="rounded-xl" />
+                  )
+                ) : (
+                  <p>Select Images or Videos</p>
                 )}
-              </div>
+              </label>
+
+              {/* COUNT */}
+              {files.length > 0 && (
+                <p className="text-sm text-zinc-400">
+                  {files.length} files selected
+                </p>
+              )}
 
               {/* PROGRESS */}
               {uploading && (
-                <div>
-                  <div className="flex justify-between text-sm text-zinc-400 mb-1">
-                    <span>Uploading...</span>
-                    <span>{progress}%</span>
-                  </div>
-
-                  <div className="w-full bg-zinc-800 rounded-full h-3">
-                    <div
-                      className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
+                <div className="w-full bg-zinc-800 h-3 rounded-full">
+                  <div
+                    className="bg-violet-500 h-3 rounded-full"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
               )}
 
@@ -203,35 +184,19 @@ export default function UploadPage() {
               <button
                 onClick={handleUpload}
                 disabled={uploading}
-                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 py-5 rounded-2xl flex justify-center items-center gap-2"
+                className="w-full py-4 bg-violet-600 rounded-xl"
               >
-                {uploading ? `Uploading ${progress}%...` : "Upload Videos"}
-                {!uploading && <ArrowRight className="w-5 h-5" />}
+                {uploading ? `Uploading ${progress}%` : "Upload Files"}
               </button>
 
             </div>
           ) : (
-            <div className="text-center py-12">
-              <CheckCircle className="w-24 h-24 text-green-500 mx-auto mb-6" />
-              <h2 className="text-4xl font-bold mb-3">Upload Successful!</h2>
-              <p className="text-zinc-400 text-lg mb-8">
-                Thank you, <span className="text-white">{name}</span>
-              </p>
-
-              <button
-                onClick={() => {
-                  setSuccess(false);
-                  setName("");
-                  setVideos([]);
-                  setPreview(null);
-                  setUploadDate(new Date().toISOString().split("T")[0]);
-                }}
-                className="px-8 py-4 bg-zinc-800 rounded-2xl"
-              >
-                Upload Again
-              </button>
+            <div className="text-center">
+              <CheckCircle className="w-16 h-16 mx-auto text-green-500" />
+              <h2 className="text-2xl mt-4">Upload Successful</h2>
             </div>
           )}
+
         </div>
       </div>
     </div>

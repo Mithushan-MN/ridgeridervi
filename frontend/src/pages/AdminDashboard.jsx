@@ -115,13 +115,24 @@ export default function AdminDashboard() {
 
                   <div className="grid grid-cols-2 gap-3">
                     {videos.map((v) => (
-                      <video
-                        key={v._id}
-                        src={v.videoUrl}
-                        controls
-                        className="rounded-lg"
-                      />
-                    ))}
+  <div key={v._id} className="rounded-lg overflow-hidden bg-black">
+    
+    {v.type === "image" ? (
+      <img
+        src={v.videoUrl}
+        alt="uploaded"
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      <video
+        src={v.videoUrl}
+        controls
+        className="w-full h-full object-cover"
+      />
+    )}
+
+  </div>
+))}
                   </div>
                 </div>
               );

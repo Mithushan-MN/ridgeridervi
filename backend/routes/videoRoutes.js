@@ -37,7 +37,7 @@ router.post("/upload", upload.single("video"), async (req, res) => {
   console.log("Upload request received!");
   
   try {
-    const { userName, videoUrl, publicId, folder,uploadDate } = req.body;
+    const { userName, videoUrl, publicId, folder,uploadDate,type } = req.body;
     
     // Case 1: File is already uploaded to Cloudinary by frontend
     if (videoUrl && publicId) {
@@ -47,6 +47,7 @@ router.post("/upload", upload.single("video"), async (req, res) => {
         publicId,
         folder,
         uploadDate: uploadDate ? new Date(uploadDate) : undefined,
+        type,
       });
       await video.save();
       return res.json(video);

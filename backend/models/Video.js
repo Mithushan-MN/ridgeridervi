@@ -7,15 +7,21 @@
     publicId: String,
     folder: String,
 
-    uploadDate: {
-      type: Date,
-      default: Date.now, // fallback if frontend doesn't send
-    },
+    type: {
+    type: String,
+    enum: ["video", "image"],
+    default: "video",
+  },
 
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+  uploadDate: {
+    type: Date,
+    default: Date.now,
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
   });
 
   module.exports = mongoose.model("Video", videoSchema);

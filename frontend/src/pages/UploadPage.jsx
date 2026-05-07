@@ -194,6 +194,22 @@ export default function UploadPage() {
             <div className="text-center">
               <CheckCircle className="w-16 h-16 mx-auto text-green-500" />
               <h2 className="text-2xl mt-4">Upload Successful</h2>
+              <p className="text-zinc-400 text-lg mb-8">
+                Thank you, <span className="text-white">{name}</span>
+              </p>
+
+              <button
+                onClick={() => {
+                  setSuccess(false);
+                  setName("");
+                  setVideos([]);
+                  setPreview(null);
+                  setUploadDate(new Date().toISOString().split("T")[0]);
+                }}
+                className="px-8 py-4 bg-zinc-800 rounded-2xl"
+              >
+                Upload Again
+              </button>
             </div>
           )}
 
